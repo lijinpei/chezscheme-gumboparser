@@ -352,7 +352,7 @@
          (define CGumboStringEqual (foreign-procedure #f (foreign-entry "gumbo_string_equals") ((* CGumboStringPiece) (* CGumboStringPiece)) boolean))
          (define CGumboStringEqualIgnoreCase (foreign-procedure #f (foreign-entry "gumbo_string_equals_ignore_case") ((* CGumboStringPiece) (* CGumboStringPiece)) boolean))
          (define CGumboVectorIndexOf (foreign-procedure #f (foreign-entry "gumbo_vector_index_of") ((* CGumboVector) void*) int))
-         (define CGumboNormalizedTagname (foreign-procedure #f (foreign-entry "gumbo_normalized_tagname") ((* CGumboStringPiece)) void))
+         (define CGumboNormalizedTagname (foreign-procedure #f (foreign-entry "gumbo_normalized_tagname") (int) (* char)))
          (define CGumboTagFromOriginalText (foreign-procedure #f (foreign-entry "gumbo_tag_from_original_text") ((* CGumboStringPiece)) void))
          (define CGumboNormalizeSvgTagname (foreign-procedure #f (foreign-entry "gumbo_normalize_svg_tagname") ((* CGumboStringPiece)) (* unsigned-8)))
          (define CGumboTagEnum (foreign-procedure #f (foreign-entry "gumbo_tag_enum") ((* unsigned-8)) int))

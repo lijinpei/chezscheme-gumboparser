@@ -1,5 +1,9 @@
 (library (gumboparser)
          (export
+           pu8-strlen
+           pu8-to-scheme-bytevector
+           reinterpret_cast
+
            GumboSourcePosition
            GumboStringPiece
            GumboVector
@@ -16,6 +20,8 @@
            GumboVector-Data
            GumboVector-Length
            GumboVector-Capacity
+           GumboVector-Index
+           GumboVector-IndexAs
 
            GumboAttribute-AttrNamespace
            GumboAttribute-Name
@@ -66,6 +72,7 @@
            GumboOutput-Errors
 
            GumboParse
+           GumboNormalizedTagname
            GumboDestroyOutput
            GumboEmptySourcePosition
            GumboEmptyString
@@ -74,12 +81,18 @@
            )
          (import (chezscheme) (cgumboparser))
          ;;; helpers
-         (define reinterprete-cast #f)
-         (define-ftype pu8 (* unsigned-8))
-         (define to-scheme-bytevector (lambda (p l)
+         (define (pu8-strlen p)
+           (let for ((i 0))
+             (if (equal? 0 (ftype-ref unsigned-8 () p i)) i (for (+ i 1)))))
+         (define pu8-to-scheme-bytevector
+           (case-lambda
+             ((p) (pu8-to-scheme-bytevector p (pu8-strlen p)))
+             ((p l)
            (let ((ret (make-bytevector l)))
              (let for ((i 0))
-               (if (< i l) (begin (bytevector-u8-set! ret i (ftype-ref pu8 () p i)) (for (+ i 1))))))))
+               (if (< i l) (begin (bytevector-u8-set! ret i (ftype-ref unsigned-8 () p i)) (for (+ i 1))))) ret))))
+         (define-syntax reinterpret_cast (syntax-rules () ((_ p t) (make-ftype-pointer t p))))
+;         (define-syntax reinterpret_cast (syntax-rules () ((_ p t) (begin (display (ftype-pointer-address p) (make-ftype-pointer t p))))))
          ;;; constructors
          (define GumboSourcePosition #f)
          (define GumboStringPiece #f)
@@ -101,7 +114,7 @@
 
          (define (GumboStringPiece-Data p)
            (assert (ftype-pointer? CGumboStringPiece p))
-           (to-scheme-bytevector (ftype-ref CGumboStringPiece (data) p) (GumboStringPiece-Length p)))
+           (pu8-to-scheme-bytevector (ftype-ref CGumboStringPiece (data) p) (GumboStringPiece-Length p)))
          (define (GumboStringPiece-Length p)
            (assert (ftype-pointer? CGumboStringPiece p))
            (ftype-ref CGumboStringPiece (length) p))
@@ -115,6 +128,12 @@
          (define (GumboVector-Capacity p)
            (assert (ftype-pointer? CGumboVector p))
            (ftype-ref CGumboVector (capacity) p))
+         (define (GumboVector-Index p i)
+           (assert (ftype-pointer? CGumboVector p))
+           (ftype-ref CGumboVector (data i) p))
+         (define-syntax GumboVector-IndexAs
+           (syntax-rules ()
+              ((_ p i t) (reinterpret_cast (GumboVector-Index p i) t))))
 
          (define (GumboAttribute-AttrNamespace p)
            (assert (ftype-pointer? CGumboAttribute p))
@@ -152,13 +171,13 @@
            (ftype-ref CGumboDocument (has_doctype) p))
          (define (GumboDocument-Name p)
            (assert (ftype-pointer? CGumboDocument p))
-           (ftype-ref CGumboDocument (name) p))
+           (pu8-to-scheme-bytevector (ftype-ref CGumboDocument (name) p)))
          (define (GumboDocument-PublicIdentifier p)
            (assert (ftype-pointer? CGumboDocument p))
-           (ftype-ref CGumboDocument (public_identifier) p))
+           (pu8-to-scheme-bytevector (ftype-ref CGumboDocument (public_identifier) p)))
          (define (GumboDocument-SystemIdentifier p)
            (assert (ftype-pointer? CGumboDocument p))
-           (ftype-ref CGumboDocument (system_identifier) p))
+           (pu8-to-scheme-bytevector (ftype-ref CGumboDocument (system_identifier) p)))
          (define (GumboDocument-DocTypeQuirksMode p)
            (assert (ftype-pointer? CGumboDocument p))
            (ftype-ref CGumboDocument (doc_type_quirks_mode) p))
@@ -253,6 +272,7 @@
 
          ;;; functions
          (define GumboParse (foreign-procedure #f (foreign-entry "gumbo_parse") (utf-8) (* CGumboOutput)))
+         (define GumboNormalizedTagname (foreign-procedure #f (foreign-entry "gumbo_normalized_tagname") (int) utf-8))
          (define GumboDestroyOutput CGumboDestroyOutput)
          (define GumboEmptySourcePosition CGumboEmptySourcePosition)
          (define GumboEmptyString CGumboEmptyString)
