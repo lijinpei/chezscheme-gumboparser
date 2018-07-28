@@ -1,0 +1,5 @@
+(load-shared-object "libgumbo.so")
+(import (cgumboparser))
+(define bv (get-bytevector-all (open-file-input-port "/home/lijinpei/tmp/index.html")))
+(define p (CGumboParse bv))
+(CGumboDestroyOutput CGumboDefaultOptions p)

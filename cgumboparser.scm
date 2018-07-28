@@ -1,4 +1,4 @@
-(library (gumboparser)
+(library (cgumboparser)
          (export
            CGumboSourcePosition
            CGumboStringPiece
@@ -7,18 +7,25 @@
            CGumboDocument
            CGumboText
            CGumboNode
-           CGumboTag
-           CGumboAttributeNamespace
-           CGumboNodeType
            CGumboElement
            CGumboOptions
            CGumboOutput
 
+           CGumboTag
+           CGumboTag-indexer
+           CGumboAttributeNamespace
+           CGumboAttributeNamespace-indexer
+           CGumboNodeType
+           CGumboNodeType-indexer
+           CGumboQuirksMode
+           CGumboQuirksMode-indexer
+           CGumboNamespaceEnum
+           CGumboNamespaceEnum-indexer
+
+
            CGumboAllocatorFunction
            CGumboDeallocatorFunction
 
-           CGumboQuirksMode
-           CGumboNamespaceEnum
            GUMBO_INSERTION_NORMAL
            GUMBO_INSERTION_BY_PARSER
            GUMBO_INSERTION_IMPLICIT_END_TAG
@@ -58,7 +65,7 @@
                          (offset unsigned)))
          (define-ftype CGumboStringPiece
                        (struct
-                         (data (* char))
+                         (data (* unsigned-8))
                          (length size_t)))
          (define-ftype CGumboVector
                        (struct
@@ -68,9 +75,9 @@
          (define-ftype CGumboAttribute
                        (struct
                          (attr_namespace int)
-                         (name (* char))
+                         (name (* unsigned-8))
                          (original_name CGumboStringPiece)
-                         (value (* char))
+                         (value (* unsigned-8))
                          (original_value CGumboStringPiece)
                          (name_start CGumboSourcePosition)
                          (name_end CGumboSourcePosition)
@@ -80,13 +87,13 @@
                        (struct
                          (children CGumboVector)
                          (has_doctype boolean)
-                         (name (* char))
-                         (public_identifier (* char))
-                         (system_identifier (* char))
+                         (name (* unsigned-8))
+                         (public_identifier (* unsigned-8))
+                         (system_identifier (* unsigned-8))
                          (doc_type_quirks_mode int)))
          (define-ftype CGumboText
                        (struct
-                         (text (* char))
+                         (text (* unsigned-8))
                          (original_text CGumboStringPiece)
                          (start_pos CGumboSourcePosition)))
          (define-ftype CGumboElement
@@ -120,7 +127,7 @@
                          (userdata void*)
                          (tab_stop int)
                          (stop_on_first_error boolean)
-                         (max_error int)
+                         (max_errors int)
                          (fragment_context int)
                          (fragment_namespace int)))
          (define-ftype CGumboOutput
@@ -128,8 +135,8 @@
                          (document (* CGumboNode))
                          (root (* CGumboNode))
                          (errors CGumboVector)))
-         (define-ftype CGumboParseTy (function ((* char)) (* CGumboOutput)))
-         (define-ftype CGumboParseWithOptionsTy (function ((* CGumboOptions) (* char) size_t) (* CGumboOutput)))
+         (define-ftype CGumboParseTy (function ((* unsigned-8)) (* CGumboOutput)))
+         (define-ftype CGumboParseWithOptionsTy (function ((* CGumboOptions) (* unsigned-8) size_t) (* CGumboOutput)))
          (define-ftype CGumboDestroyOutputTy (function ((* CGumboOptions) (* CGumboOutput)) void))
          (define CGumboTag
            (make-enumeration
@@ -287,6 +294,7 @@
               GUMBO_TAG_UNKNOWN
               GUMBO_TAG_LAST
              )))
+         (define CGumboTag-indexer (enum-set-indexer CGumboTag))
          (define CGumboAttributeNamespace
            (make-enumeration
              '(
@@ -295,6 +303,7 @@
                GUMBO_ATTR_NAMESPACE_XML
                GUMBO_ATTR_NAMESPACE_XMLNS
               )))
+         (define CGumboAttributeNamespace-indexer (enum-set-indexer CGumboAttributeNamespace))
          (define CGumboNodeType
            (make-enumeration
              '(
@@ -306,6 +315,7 @@
                GUMBO_NODE_WHITESPACE
                GUMBO_NODE_TEMPLATE
                )))
+         (define CGumboNodeType-indexer (enum-set-indexer CGumboNodeType))
          (define CGumboQuirksMode
            (make-enumeration
              '(
@@ -313,6 +323,7 @@
                GUMBO_DOCTYPE_QUIRKS
                GUMBO_DOCTYPE_LIMITED_QUIRKS
                )))
+         (define CGumboQuirksMode-indexer (enum-set-indexer CGumboQuirksMode))
          (define CGumboNamespaceEnum
            (make-enumeration
              '(
@@ -320,6 +331,7 @@
                GUMBO_NAMESPACE_SVG
                GUMBO_NAMESPACE_MATHML
                )))
+         (define CGumboNamespaceEnum-indexer (enum-set-indexer CGumboNamespaceEnum))
          (define GUMBO_INSERTION_NORMAL 0)
          (define GUMBO_INSERTION_BY_PARSER (bitwise-arithmetic-shift-left 1 0))
          (define GUMBO_INSERTION_IMPLICIT_END_TAG (bitwise-arithmetic-shift-left 1 1))
@@ -342,11 +354,11 @@
          (define CGumboVectorIndexOf (foreign-procedure #f (foreign-entry "gumbo_vector_index_of") ((* CGumboVector) void*) int))
          (define CGumboNormalizedTagname (foreign-procedure #f (foreign-entry "gumbo_normalized_tagname") ((* CGumboStringPiece)) void))
          (define CGumboTagFromOriginalText (foreign-procedure #f (foreign-entry "gumbo_tag_from_original_text") ((* CGumboStringPiece)) void))
-         (define CGumboNormalizeSvgTagname (foreign-procedure #f (foreign-entry "gumbo_normalize_svg_tagname") ((* CGumboStringPiece)) (* char)))
-         (define CGumboTagEnum (foreign-procedure #f (foreign-entry "gumbo_tag_enum") ((* char)) int))
-         (define CGumboTagNEnum (foreign-procedure #f (foreign-entry "gumbo_tagn_enum") ((* char) unsigned) int))
-         (define CGumboGetAttribute (foreign-procedure #f (foreign-entry "gumbo_get_attribute") ((* CGumboVector) (* char)) (* CGumboAttribute)))
-         (define CGumboParse (foreign-procedure #f (foreign-entry "gumbo_parse") (u8*) (* CGumboOutput)))
-         (define CGumboParseWithOptions (foreign-procedure #f (foreign-entry "gumbo_parse_with_options") ((* CGumboOptions) u8* size_t) (* CGumboOutput)))
+         (define CGumboNormalizeSvgTagname (foreign-procedure #f (foreign-entry "gumbo_normalize_svg_tagname") ((* CGumboStringPiece)) (* unsigned-8)))
+         (define CGumboTagEnum (foreign-procedure #f (foreign-entry "gumbo_tag_enum") ((* unsigned-8)) int))
+         (define CGumboTagNEnum (foreign-procedure #f (foreign-entry "gumbo_tagn_enum") ((* unsigned-8) unsigned) int))
+         (define CGumboGetAttribute (foreign-procedure #f (foreign-entry "gumbo_get_attribute") ((* CGumboVector) (* unsigned-8)) (* CGumboAttribute)))
+         (define CGumboParse (foreign-procedure #f (foreign-entry "gumbo_parse") ((* unsigned-8)) (* CGumboOutput)))
+         (define CGumboParseWithOptions (foreign-procedure #f (foreign-entry "gumbo_parse_with_options") ((* CGumboOptions) (* unsigned-8) size_t) (* CGumboOutput)))
          (define CGumboDestroyOutput (foreign-procedure #f (foreign-entry "gumbo_destroy_output") ((* CGumboOptions) (* CGumboOutput)) void))
 )
