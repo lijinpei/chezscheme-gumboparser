@@ -3,9 +3,20 @@
            GumboSourcePosition
            GumboStringPiece
            GumboVector
+           GumboAttribute
+           GumboDocument
+           GumboText
+           GumboNode
            GumboTag
            GumboAttributeNamespace
            GumboNodeType
+           GumboElement
+           GumboOptions
+           GumboOutput
+
+           GumboAllocatorFunction
+           GumboDeallocatorFunction
+
            GumboQuirksMode
            GumboNamespaceEnum
            GUMBO_INSERTION_NORMAL
@@ -19,6 +30,25 @@
            GUMBO_INSERTION_ADOPTION_AGENCY_CLONED
            GUMBO_INSERTION_ADOPTION_AGENCY_MOVED
            GUMBO_INSERTION_FOSTER_PARENTED
+           GUMBO_INSERTION_NORMAL
+
+           GumboStringEqual
+           GumboStringEqualIgnoreCase
+           GumboVectorIndexOf
+           GumboNormalizedTagname
+           GumboTagFromOriginalText
+           GumboNormalizeSvgTagname
+           GumboTagEnum
+           GumboTagNEnum
+           GumboGetAttribute
+           GumboParse
+           GumboParseWithOptions
+           GumboDestroyOutput
+
+           GumboEmptySourcePosition
+           GumboEmptyString
+           GumboEmptyVector
+           GumboDefaultOptions
            )
          (import (chezscheme))
          (define-ftype GumboSourcePosition
@@ -35,15 +65,6 @@
                          (data (* void*))
                          (length unsigned)
                          (capacity unsigned)))
-         (define-ftype GumboStringEqaulTy
-                       (function ((* GumboStringPiece) (* GumboStringPiece)) boolean))
-         (define-ftype GumboVectorIndexOfTy
-                       (function ((* GumboVector) void*) int))
-         (define-ftype GumboNormalizedTagnameTy (function (int) (* char)))
-         (define-ftype GumboTagFromOriginalTextTy (function ((* GumboStringPiece)) void))
-         (define-ftype GumboNormalizeSvgTagnameTy (function ((* GumboStringPiece)) (* char)))
-         (define-ftype GumboTagEnumTy (function ((* char)) int))
-         (define-ftype GumboTagNEnumTy (function ((* char) unsigned) int))
          (define-ftype GumboAttribute
                        (struct
                          (attr_namespace int)
@@ -55,7 +76,6 @@
                          (name_end GumboSourcePosition)
                          (value_start GumboSourcePosition)
                          (value_end GumboSourcePosition)))
-         (define-ftype GumboGetAttributeTy (function ((* GumboVector) (* char)) (* GumboAttribute)))
          (define-ftype GumboDocument
                        (struct
                          (children GumboVector)
@@ -111,7 +131,6 @@
          (define-ftype GumboParseTy (function ((* char)) (* GumboOutput)))
          (define-ftype GumboParseWithOptionsTy (function ((* GumboOptions) (* char) size_t) (* GumboOutput)))
          (define-ftype GumboDestroyOutputTy (function ((* GumboOptions) (* GumboOutput)) void))
-         (define LoadSharedLibrary)
          (define GumboTag
            (make-enumeration
              '(
@@ -312,29 +331,23 @@
          (define GUMBO_INSERTION_ADOPTION_AGENCY_CLONED (bitwise-arithmetic-shift-left 1 8))
          (define GUMBO_INSERTION_ADOPTION_AGENCY_MOVED (bitwise-arithmetic-shift-left 1 9))
          (define GUMBO_INSERTION_FOSTER_PARENTED (bitwise-arithmetic-shift-left 1 10))
-         (define GumboStringEqaul)
-         (define GumboStringEqaulIgnoreCase)
-         (define GumboVectorIndexOf)
-         (define GumboNormalizedTagname)
-         (define GumboTagFromOriginalText)
-         (define GumboNormalizeSvgTagname)
-         (define GumboTagEnum)
-         (define GumboTagNEnum)
-         (define GumboGetAttribute)
-         (define GumboParse)
-         (define GumboParseWithOptions)
-         (define GumboDestroyOutput)
-         (load-shared-object "libgumbo.so")
-         (set! GumboStringEqaul (make-ftype-pointer GumboStringEqaulTy (foreign-entry "gumbo_string_equals")))
-         (set! GumboStringEqaulIgnoreCase (make-ftype-pointer GumboStringEqaulTy (foreign-entry "gumbo_string_equals_ignore_case")))
-         (set! GumboVectorIndexOf (make-ftype-pointer GumboVectorIndexOfTy (foreign-entry "gumbo_vector_index_of")))
-         (set! GumboNormalizedTagname (make-ftype-pointer GumboNormalizedTagnameTy (foreign-entry "gumbo_normalized_tagname")))
-         (set! GumboTagFromOriginalText (make-ftype-pointer GumboTagFromOriginalTextTy (foreign-entry "gumbo_tag_from_original_text")))
-         (set! GumboNormalizeSvgTagname (make-ftype-pointer GumboNormalizeSvgTagnameTy (foreign-entry "gumbo_normalize_svg_tagname")))
-         (set! GumboTagEnum (make-ftype-pointer GumboTagEnumTy (foreign-entry "gumbo_tag_enum")))
-         (set! GumboTagNEnum (make-ftype-pointer GumboTagNEnumTy (foreign-entry "gumbo_tagn_enum")))
-         (set! GumboGetAttribute (make-ftype-pointer GumboGetAttributeTy (foreign-entry "gumbo_get_attribute")))
-         (set! GumboParse (make-ftype-pointer GumboParseTy (foreign-entry "gumbo_parse")))
-         (set! GumboParseWithOptions (make-ftype-pointer GumboParseWithOptionsTy (foreign-entry "gumbo_parse_with_options")))
-         (set! GumboDestroyOutput (make-ftype-pointer GumboDestroyOutputTy (foreign-entry "gumbo_destroy_output")))
+         (define x (load-shared-object "libgumbo.so"))
+
+         (define GumboEmptySourcePosition (make-ftype-pointer GumboSourcePosition (foreign-entry "kGumboEmptySourcePosition")))
+         (define GumboEmptyString (make-ftype-pointer GumboStringPiece (foreign-entry "kGumboEmptyString")))
+         (define GumboEmptyVector (make-ftype-pointer GumboVector (foreign-entry "kGumboEmptyVector")))
+         (define GumboDefaultOptions (make-ftype-pointer GumboOptions (foreign-entry "kGumboDefaultOptions")))
+
+         (define GumboStringEqual (foreign-procedure #f (foreign-entry "gumbo_string_equals") ((* GumboStringPiece) (* GumboStringPiece)) boolean))
+         (define GumboStringEqualIgnoreCase (foreign-procedure #f (foreign-entry "gumbo_string_equals_ignore_case") ((* GumboStringPiece) (* GumboStringPiece)) boolean))
+         (define GumboVectorIndexOf (foreign-procedure #f (foreign-entry "gumbo_vector_index_of") ((* GumboVector) void*) int))
+         (define GumboNormalizedTagname (foreign-procedure #f (foreign-entry "gumbo_normalized_tagname") ((* GumboStringPiece)) void))
+         (define GumboTagFromOriginalText (foreign-procedure #f (foreign-entry "gumbo_tag_from_original_text") ((* GumboStringPiece)) void))
+         (define GumboNormalizeSvgTagname (foreign-procedure #f (foreign-entry "gumbo_normalize_svg_tagname") ((* GumboStringPiece)) (* char)))
+         (define GumboTagEnum (foreign-procedure #f (foreign-entry "gumbo_tag_enum") ((* char)) int))
+         (define GumboTagNEnum (foreign-procedure #f (foreign-entry "gumbo_tagn_enum") ((* char) unsigned) int))
+         (define GumboGetAttribute (foreign-procedure #f (foreign-entry "gumbo_get_attribute") ((* GumboVector) (* char)) (* GumboAttribute)))
+         (define GumboParse (foreign-procedure #f (foreign-entry "gumbo_parse") (u8*) (* GumboOutput)))
+         (define GumboParseWithOptions (foreign-procedure #f (foreign-entry "gumbo_parse_with_options") ((* GumboOptions) u8* size_t) (* GumboOutput)))
+         (define GumboDestroyOutput (foreign-procedure #f (foreign-entry "gumbo_destroy_output") ((* GumboOptions) (* GumboOutput)) void))
 )
